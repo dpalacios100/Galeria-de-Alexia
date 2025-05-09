@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Galería con Carpetas</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    .folder-list, .media-grid { display: flex; flex-wrap: wrap; gap: 1rem; }
+    .folder { padding: 10px; border: 2px solid #333; border-radius: 8px; cursor: pointer; }
+    .folder.active { background-color: #f0f0f0; }
+    .media-grid img, .media-grid video { max-width: 200px; max-height: 200px; border-radius: 8px; }
+    .controls { margin: 1rem 0; }
+  </style>
+</head>
+<body>
+  <h1>Gestor de Carpetas Multimedia</h1>
+
+  <div class="controls">
+    <input type="text" id="folderName" placeholder="Nombre de carpeta" />
+    <button onclick="createFolder()">Crear Carpeta</button>
+  </div>
+
+  <div class="folder-list" id="folderList"></div>
+
+  <div class="controls">
+    <input type="file" id="mediaInput" multiple accept="image/*,video/*" />
+    <button onclick="addMedia()">Agregar a carpeta activa</button>
+  </div>
+
+  <h2>Contenido de carpeta: <span id="currentFolderName">Ninguna</span></h2>
+  <div class="media-grid" id="mediaGrid"></div>
+
+  <script>
+    const folders = {};
+    let currentFolder = null;
+
+    function createFolder() {
+      const name = document.getElementById('folderName').value.trim();
+      if (!name || folders[name]) return alert("Nombre inválido o carpeta ya existe.");
+      folders[name] = [];
+      renderFolders();
+      document.getElementById('folderName').value = '';
+    }
+
+    function renderFolders() {
+      const list = document.getElementById('folderList');
+      list.innerHTML = '';
+      Object.keys(folders).forEach(folder => {
+        const el = document.createElement('div');
+        el.className = 'folder' + (folder === currentFolder ? ' active' : '');
+        el.textContent = folder;
+        el.onclick = () => {
+          currentFolder = folder;
+          renderFolders();
+          renderMedia();
+        };
+        list.appendChild(el);
+      });
+    }
+
+    function addMedia() {
+      const input = document.getElementById('mediaInput');
+      if (!currentFolder || input.files.length === 0) return alert("Selecciona carpeta y archivos.");
+      for (let file of input.files) {
+        const url = URL.createObjectURL(file);
+        folders[currentFolder].push({ type: file.type.startsWith('video') ? 'video' : 'image', url });
+      }
+      renderMedia();
+      input.value = '';
+    }
+
+    function renderMedia() {
+      const grid = document.getElementById('mediaGrid');
+      const label = document.getElementById('currentFolderName');
+      grid.innerHTML = '';
+      if (!currentFolder) {
+        label.textContent = 'Ninguna';
+        return;
+      }
+      label.textContent = currentFolder;
+      folders[currentFolder].forEach(media => {
+        const el = document.createElement(media.type);
+        el.src = media.url;
+        if (media.type === 'video') {
+          el.controls = true;
+        }
+        grid.appendChild(el);
+      });
+    }
+  </script>
+</body>
+</html>
